@@ -7,7 +7,7 @@ import random
 
 def insert_teleportation_links_into_maze(maze, t):
     # Solve the maze to first get a solution for the shortest path
-    shortest_path = astar_solve(maze, dict())
+    shortest_path = breadth_first_search(maze, dict())
 
     # Do not insert teleportation links along the shortest path, to ensure the maze will still always be solvable
     cells_not_to_insert_links = shortest_path
@@ -66,7 +66,7 @@ def get_maze_with_teleportation_links(n, t):
     return m, teleportation_links
 
 
-def astar_solve(maze, teleportation_links):
+def breadth_first_search(maze, teleportation_links):
     frontier = deque()
     start_position = maze.start
     parent_nodes = dict()
@@ -101,10 +101,10 @@ def reconstruct_solution(previous_nodes, end_node):
 
 
 if __name__ == '__main__':
-    m, teleportation_links = get_maze_with_teleportation_links(30, 10)
+    m, teleportation_links = get_maze_with_teleportation_links(10, 2)
     print(m)
     print("teleportation links", teleportation_links)
-    solution = astar_solve(m, teleportation_links)
+    solution = breadth_first_search(m, teleportation_links)
     if solution is None:
         raise "No solution was found for maze"
 
