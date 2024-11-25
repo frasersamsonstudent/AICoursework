@@ -87,6 +87,14 @@ def get_maze_with_teleportation_links(n, t):
 
 
 def breadth_first_search(maze, teleportation_links):
+    """Run breadth-first search on a given maze with teleportation links, to find a path from the start to the end.
+
+    :param maze: Maze object
+    :param teleportation_links: Dictionary of teleportation entrance cells to exit cells
+
+    :return: Path from start to end, number of steps taken to find path
+    :rtype: (list[(int, int)], int)
+    """
     # Initial data structures
     frontier = deque()
     start_position = maze.start
