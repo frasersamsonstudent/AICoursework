@@ -3,11 +3,19 @@ from collections import deque
 from mazelib import Maze
 from mazelib.generate.Prims import Prims
 import random
+import numpy
 
 
 def insert_teleportation_links_into_maze(maze, t):
+    """ Create a dictionary of teleportation links.
+
+    :param maze: Maze object
+    :param t: Number of teleportation links to create
+
+    :return: Dictionary mapping entrance cell of a teleportation link to an exit cell
+    """
     # Solve the maze to first get a solution for the shortest path
-    shortest_path = breadth_first_search(maze, dict())
+    (shortest_path, _steps) = breadth_first_search(maze, dict())
 
     # Do not insert teleportation links along the shortest path, to ensure the maze will still always be solvable
     cells_not_to_insert_links = shortest_path
@@ -34,6 +42,18 @@ def insert_teleportation_links_into_maze(maze, t):
 
 
 def get_neighbours(maze, current_row, current_col, teleportation_links):
+    """ Get neighbours in  maze.
+
+    Gets all empty neighbours of cell. Where a neighbour contains a teleportation link, it will be replaced with
+    the exit of the teleportation link.
+
+    :param maze: Maze object
+    :param current_row: Current row
+    :param current_col: Current col
+    :param teleportation_links: Dictionary of teleportation entrance to exit
+
+    :return: List of neighbouring cells
+    """
     directions = [(-1, 0), (0, 1), (1, 0), (0, -1)]
     height, width = len(maze.grid), len(maze.grid[0])
 
@@ -67,25 +87,32 @@ def get_maze_with_teleportation_links(n, t):
 
 
 def breadth_first_search(maze, teleportation_links):
+    # Initial data structures
     frontier = deque()
     start_position = maze.start
     parent_nodes = dict()
 
+    # Set starting nodes parent to None
     parent_nodes[start_position] = None
+
+    # Add first cell to frontier
     frontier.append(start_position)
 
-    while frontier:
+    steps = 0
+
+    while len(frontier):
+        steps += 1
         current = frontier.popleft()
 
         if current == maze.end:
-            return reconstruct_solution(parent_nodes, maze.end)
+            return reconstruct_solution(parent_nodes, maze.end), steps
 
         for neighbour in get_neighbours(maze, current[0], current[1], teleportation_links):
             if neighbour not in parent_nodes.keys():
                 parent_nodes[neighbour] = current
                 frontier.append(neighbour)
 
-    return None
+    return None, steps
 
 
 def reconstruct_solution(previous_nodes, end_node):
@@ -100,12 +127,52 @@ def reconstruct_solution(previous_nodes, end_node):
     return solution_path
 
 
-if __name__ == '__main__':
-    m, teleportation_links = get_maze_with_teleportation_links(10, 2)
-    print(m)
-    print("teleportation links", teleportation_links)
-    solution = breadth_first_search(m, teleportation_links)
+def run_algorithm_on_maze(n, t):
+    m, teleportation_links = get_maze_with_teleportation_links(n, t)
+    (solution, number_of_steps) = breadth_first_search(m, teleportation_links)
     if solution is None:
         raise "No solution was found for maze"
 
-    print('\n'.join([str(cell) for cell in solution]))
+    return solution, number_of_steps
+
+
+def get_data_for_task_2():
+    samples_for_each_n_value = dict()
+    n_values = (10, 15, 20, 25, 30)
+    t = 2
+
+    # Repeat each maze size a set number of times and take an average to get more consistent and generalizable results
+    num_of_samples_for_each_size = 100
+
+    for n in n_values:
+        sample_time_steps = [run_algorithm_on_maze(n, t)[1] for _ in range(num_of_samples_for_each_size)]
+        samples_for_each_n_value[n] = sample_time_steps
+
+    for n, samples in samples_for_each_n_value.items():
+        min_sample, q1, median, q3, max_sample = numpy.quantile(samples, [0, 0.25, 0.5, 0.75, 1])
+
+        print(f'Data for size {n}')
+        print(f'Median value: {median}')
+
+
+def get_data_for_task_3():
+    samples_for_each_t_value = dict()
+    t_values = range(11)
+    n = 30
+
+    # Repeat each maze size a set number of times and take an average to get more consistent and generalizable results
+    num_of_samples_for_each_size = 1000
+
+    for t in t_values:
+        sample_time_steps = [run_algorithm_on_maze(n, t)[1] for _ in range(num_of_samples_for_each_size)]
+        samples_for_each_t_value[t] = sample_time_steps
+
+    for t, samples in samples_for_each_t_value.items():
+        min_sample, q1, median, q3, max_sample = numpy.quantile(samples, [0, 0.25, 0.5, 0.75, 1])
+
+        print(f'Data for {t} teleportation links')
+        print(f'Median value: {median}')
+
+
+if __name__ == '__main__':
+    get_data_for_task_3()
